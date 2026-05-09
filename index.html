@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Fitness Pro - Multi-Model Assistant</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8.6/dist/teachablemachine-pose.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@2.2.1/dist/posenet.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
     <style>
       :root {
@@ -183,38 +184,35 @@
       let stage = "up"; // Status posisi: up atau down
 
       async function init() {
-        const statusLabel = document.getElementById("status-text");
-        const exercise = document.getElementById("exercise-select").value;
-        const URL = MODEL_URLS[exercise];
+        try {
+            const exercise = document.getElementById("exercise-select").value;
+            const URL = MODEL_URLS[exercise];
+            
+            // 1. Load model dulu
+            model = await tmPose.load(URL + "model.json", URL + "metadata.json");
+            maxPredictions = model.getTotalClasses();
 
-        if (URL.includes("LINK_")) {
-          alert(
-            "Mohon masukkan link model Teachable Machine Anda ke dalam kode terlebih dahulu!",
-          );
-          return;
+            // 2. Setup webcam setelah model siap
+            const size = 300;
+            const flip = true;
+            webcam = new tmPose.Webcam(size, size, flip); 
+            
+            await webcam.setup(); // Tunggu izin user
+            await webcam.play();  // Nyalakan stream
+            
+            // 3. Masuk ke loop
+            window.requestAnimationFrame(loop);
+
+            const canvas = document.getElementById("canvas");
+            canvas.width = size; canvas.height = size;
+            ctx = canvas.getContext("2d");
+            
+            document.getElementById("status-text").innerText = "Siap!";
+        } catch (e) {
+            console.error("Gagal inisialisasi:", e);
+            document.getElementById("status-text").innerText = "Error: " + e.message;
         }
-
-        statusLabel.innerText = "Memuat AI " + exercise.toUpperCase() + "...";
-
-        // Load Model
-        model = await tmPose.load(URL + "model.json", URL + "metadata.json");
-        maxPredictions = model.getTotalClasses();
-
-        // Setup Webcam
-        const size = 300;
-        webcam = new tmPose.Webcam(size, size, flip = true);
-        await webcam.setup();
-        await webcam.play();
-
-        statusLabel.innerText = "Kamera Aktif! Ayo Gerak!";
-        window.requestAnimationFrame(loop);
-
-        // Canvas Setup
-        const canvas = document.getElementById("canvas");
-        canvas.width = size;
-        canvas.height = size;
-        ctx = canvas.getContext("2d");
-      }
+    }
 
       async function loop(timestamp) {
         webcam.update();
