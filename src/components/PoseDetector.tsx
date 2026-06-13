@@ -1,18 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import * as tmPose from "@teachablemachine/pose";
 
+interface BarData {
+  label: string;
+  value: number;
+}
+
 interface PoseDetectorProps {
   modelUrl: string;
-  onCheckRep: (prediction: any[], stage: string) => { nextStage: string; status: string; isRep: boolean } | null;
+  onCheckRep: (prediction: any[], stage: string) => { nextStage: string; status: string; isRep: boolean; currentBars: BarData[] };
 }
 
 export default function PoseDetector({ modelUrl, onCheckRep }: PoseDetectorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [reps, setReps] = useState(0);
   const [status, setStatus] = useState("INITIALIZING");
-  const [accuracy, setAccuracy] = useState(0);
+  const [bars, setBars] = useState<BarData[]>([]);
   
-  // Ref untuk menyimpan data tanpa memicu re-render yang bikin lag
   const logicRef = useRef({ stage: "up", counter: 0, lastRepTime: 0 });
 
   useEffect(() => {
@@ -22,54 +26,38 @@ export default function PoseDetector({ modelUrl, onCheckRep }: PoseDetectorProps
 
     const init = async () => {
       try {
-        // Load model dan metadata dari Teachable Machine
         model = await tmPose.load(modelUrl + "model.json", modelUrl + "metadata.json");
         
-        // Setup ukuran kamera (480px biar smooth di browser)
         const size = 480; 
-        const flip = true; // Mirroring kamera
-        webcam = new tmPose.Webcam(size, size, flip); 
-        
+        webcam = new tmPose.Webcam(size, size, true); 
         await webcam.setup(); 
         await webcam.play();
-        setStatus("READY");
+        setStatus("SYSTEM LIVE");
 
         const loop = async () => {
-          webcam.update(); // Update frame kamera
-
-          // Estimasi kerangka pose tubuh
+          webcam.update();
           const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
           const prediction = await model.predict(posenetOutput);
 
-          // Cari probabilitas tertinggi untuk ditampilkan di HUD akurasi
-          if (prediction && prediction.length > 0) {
-            const probabilities = prediction.map(p => p.probability); // Ambil probabilitas tertinggi dari semua kelas
-            setAccuracy(Math.max(...probabilities)); // Update akurasi tertinggi untuk HUD
-          } else {
-            setAccuracy(0); // Jika tidak ada prediksi, set akurasi ke 0% untuk menandakan ketidakpastian model
-          }
-
-          // Atur batasan minimal keypoint manusia terdeteksi (Confidence Score)
-          const minConfidence = 0.65; 
+          const minConfidence = 0.65;
           const now = Date.now();
 
           if (pose && pose.score > minConfidence) {
-            // KIRIM SELURUH ARRAY PREDICTION KE LOGIC EXERCISEPAGE
+            // Panggil logic dan ambil data bar dinamis
             const result = onCheckRep(prediction, logicRef.current.stage);
             
             if (result) {
+              setBars(result.currentBars);
               logicRef.current.stage = result.nextStage;
               setStatus(result.status);
 
-              // Jika gerakan dinyatakan selesai (isRep = true)
               if (result.isRep) {
-                // Cooldown 600ms biar pas badannya goyang dikit gak kehitung dua kali
-                if (now - logicRef.current.lastRepTime > 600) {
+                if (now - logicRef.current.lastRepTime > 650) {
                   logicRef.current.counter++;
                   logicRef.current.lastRepTime = now;
                   setReps(logicRef.current.counter);
 
-                  // Efek Suara Ding/Beep Khas Aplikasi Olahraga
+                  // Beep sound
                   try {
                     const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
                     const osc = audioCtx.createOscillator();
@@ -77,27 +65,22 @@ export default function PoseDetector({ modelUrl, onCheckRep }: PoseDetectorProps
                     osc.type = "sine";
                     osc.frequency.setValueAtTime(880, audioCtx.currentTime);
                     osc.start();
-                    osc.stop(audioCtx.currentTime + 0.1);
-                  } catch (audioErr) {
-                    console.log("Audio blocked by browser auto-play policy");
-                  }
+                    osc.stop(audioCtx.currentTime + 0.15);
+                  } catch (e) {}
                 }
               }
             }
           }
 
-          // Render visual ke dalam Canvas HTML5
           if (canvasRef.current) {
             const ctx = canvasRef.current.getContext("2d");
             if (ctx) {
               ctx.clearRect(0, 0, size, size);
               ctx.drawImage(webcam.canvas, 0, 0);
-              
-              // Gambar garis skeleton warna Kuning Neon khusus
               if (pose) {
-                ctx.strokeStyle = "#e2ff3d";
-                ctx.fillStyle = "#e2ff3d";
-                ctx.lineWidth = 3;
+                ctx.strokeStyle = logicRef.current.stage === "down" ? "#ff0055" : "#00f3ff";
+                ctx.fillStyle = logicRef.current.stage === "down" ? "#ff0055" : "#00f3ff";
+                ctx.lineWidth = 4;
                 tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
                 tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
               }
@@ -105,17 +88,13 @@ export default function PoseDetector({ modelUrl, onCheckRep }: PoseDetectorProps
           }
           animationId = requestAnimationFrame(loop);
         };
-        
         loop();
       } catch (err) {
-        console.error("Gagal menjalankan kamera/AI:", err);
-        setStatus("CAMERA ERROR");
+        setStatus("OFFLINE / CAMERA ERROR");
       }
     };
 
     init();
-
-    // Jalankan pembersihan (cleanup) pas ganti halaman biar memori / kamera mati bersih
     return () => {
       if (webcam) webcam.stop();
       cancelAnimationFrame(animationId);
@@ -123,44 +102,66 @@ export default function PoseDetector({ modelUrl, onCheckRep }: PoseDetectorProps
   }, [modelUrl, onCheckRep]);
 
   return (
-    <div className="w-full flex flex-col items-center">
-      {/* Tampilan HUD Skor Repetisi */}
-      <div className="flex items-baseline gap-6 mb-10 text-center">
-        <span className="text-[14rem] font-black italic leading-[0.7] text-[#e2ff3d] tracking-tighter tabular-nums">
+    <div className="w-full max-w-5xl grid grid-col-1 lg:grid-cols-12 gap-8 items-center">
+      
+      {/* SEKTOR KIRI: KAMERA TRACKING FRAME */}
+      <div className="lg:col-span-5 flex flex-col items-center">
+        <div className="relative w-full aspect-square bg-zinc-900 border border-zinc-800 shadow-[0_0_50px_rgba(0,243,255,0.03)] overflow-hidden rounded-sm">
+          <canvas ref={canvasRef} width={480} height={480} className="w-full h-full object-cover brightness-75 contrast-125 grayscale-[20%]" />
+          <div className={`absolute top-0 left-0 text-black px-3 py-1 text-[9px] font-black uppercase tracking-wider ${logicRef.current.stage === 'down' ? 'bg-[#ff0055]' : 'bg-[#00f3ff]'}`}>
+            {status}
+          </div>
+        </div>
+      </div>
+
+      {/* SEKTOR TENGAH: SKOR REPETISI RAKSASA */}
+      <div className="lg:col-span-3 flex flex-col items-center justify-center py-6 border-y lg:border-y-0 lg:border-x border-zinc-900">
+        <span className={`text-[12rem] font-black italic leading-none tracking-tighter tabular-nums transition-colors duration-300 ${logicRef.current.stage === 'down' ? 'text-[#ff0055]' : 'text-[#00f3ff]'}`}>
           {reps}
         </span>
-        <div className="flex flex-col text-left border-l-4 border-[#e2ff3d] pl-4">
-          <span className="text-3xl font-black italic text-white uppercase leading-none">Reps</span>
-          <span className="text-[#e2ff3d] font-bold text-[10px] mt-2 tracking-widest opacity-80">
-            CONFIDENCE: {(accuracy * 100).toFixed(0)}%
-          </span>
-        </div>
+        <span className="text-zinc-500 text-xs font-bold tracking-[0.4em] uppercase -mt-2">REPETITIONS</span>
       </div>
-      
-      {/* Frame Kotak Kamera Elit */}
-      <div className="relative w-full max-w-[480px] aspect-square bg-zinc-900 border-2 border-zinc-800 shadow-[0_0_80px_rgba(226,255,61,0.06)] overflow-hidden">
-        <canvas 
-          ref={canvasRef} 
-          width={480} 
-          height={480} 
-          className="w-full h-full object-cover grayscale brightness-50 hover:grayscale-0 hover:brightness-100 transition-all duration-700" 
-        />
+
+      {/* SEKTOR KANAN: OUTPUT PROGRESS BARS (SINKRON DENGAN TEACHABLE MACHINE) */}
+      <div className="lg:col-span-4 flex flex-col justify-center space-y-5 p-4 bg-zinc-900/30 border border-zinc-950/50 rounded-sm">
+        <h3 className="text-zinc-400 font-black italic text-xs uppercase tracking-widest border-b border-zinc-900 pb-2">
+          AI Realtime Output
+        </h3>
         
-        {/* Indikator Status di Pojok Kiri Atas */}
-        <div className="absolute top-0 left-0 bg-[#e2ff3d] text-black px-4 py-1 text-[10px] font-black uppercase italic tracking-tighter">
-          SYSTEM LIVE // {status}
-        </div>
+        {bars.length === 0 ? (
+          <p className="text-xs text-zinc-600 italic">Waiting for telemetry data...</p>
+        ) : (
+          bars.map((bar, index) => {
+            const percentage = (bar.value * 100).toFixed(0);
+            const isHigh = bar.value > 0.85;
+            
+            // Set warna bar dinamis: Pink untuk gerakan target, Cyan untuk sisanya
+            const barColor = bar.label.toLowerCase().includes('bawah') || bar.label.toLowerCase().includes('lompat')
+              ? 'bg-[#ff0055]' 
+              : 'bg-[#00f3ff]';
 
-        {/* Ornamen Teks Dekorasi ala Cyberpunk Sport */}
-        <div className="absolute bottom-4 left-4 right-4 flex justify-between text-[8px] font-bold text-zinc-600 uppercase tracking-[0.3em]">
-          <span>TRACKING_CORE_V5</span>
-          <span>VITE_ENGINE</span>
-        </div>
+            return (
+              <div key={index} className="space-y-1">
+                <div className="flex justify-between items-baseline">
+                  <span className={`text-xs font-bold tracking-tight uppercase ${isHigh ? 'text-zinc-100 font-black' : 'text-zinc-500'}`}>
+                    {bar.label}
+                  </span>
+                  <span className={`text-xs font-mono font-bold ${isHigh ? 'text-zinc-100' : 'text-zinc-600'}`}>
+                    {percentage}%
+                  </span>
+                </div>
+                <div className="w-full h-3 bg-zinc-900 border border-zinc-800 p-[2px] rounded-full">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-75 ${barColor}`}
+                    style={{ width: `${percentage}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
-      <p className="mt-14 text-zinc-800 font-black text-[10px] uppercase tracking-[0.8em]">
-        Do not compromise on form
-      </p>
     </div>
   );
 }
