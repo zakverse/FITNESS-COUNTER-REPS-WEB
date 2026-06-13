@@ -314,7 +314,7 @@ export default function App() {
             const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
             const prediction = await model.predict(posenetOutput);
 
-            if (pose && pose.score > 0.60) {
+            if (pose && pose.score > 0.15) {
               const currentExerciseLogic = EXERCISES_DATA[trackingRef.current.activeKey];
               const result = currentExerciseLogic.checkRep(prediction, trackingRef.current.stage);
               
