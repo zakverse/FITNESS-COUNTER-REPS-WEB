@@ -38,6 +38,7 @@ export default function Training({
   const [currentBars, setCurrentBars] = useState<{ label: string; value: number; color: string }[]>([]);
   const [hasRepJustOccurred, setHasRepJustOccurred] = useState(false);
   const [currentStage, setCurrentStage] = useState("up");
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   // Ref tracking state sync for high frequency animation frame callbacks
   const trackingRef = useRef({
@@ -261,11 +262,51 @@ export default function Training({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeKey]);
 
-  const handleStartStop = () => {
-    if (!isTraining) {
+  // Countdown effect before starting active training
+  useEffect(() => {
+    if (countdown === null) return;
+    
+    if (countdown === 0) {
+      setCountdown(null);
       trackingRef.current.stage = "up";
       setIsTraining(true);
       setCurrentStatus("CALIBRATING POSITION");
+      return;
+    }
+
+    // Play a synth beep on each tick
+    try {
+      const audioCtx = new (window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.type = "sine";
+      // Higher beep on last tick (1) before workout starts
+      osc.frequency.setValueAtTime(countdown === 1 ? 880 : 440, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.12);
+    } catch (e) {
+      // Audio context block fallback
+    }
+
+    const timerId = setTimeout(() => {
+      setCountdown(countdown - 1);
+    }, 1000);
+
+    return () => clearTimeout(timerId);
+  }, [countdown, setIsTraining]);
+
+  const handleStartStop = () => {
+    if (!isTraining) {
+      if (countdown !== null) {
+        setCountdown(null);
+        setCurrentStatus("STANDBY / CALIBRATING");
+      } else {
+        setCountdown(5);
+        setCurrentStatus("GET READY");
+      }
     } else {
       setIsTraining(false);
       setCurrentStatus("PAUSED / STANDBY");
@@ -273,6 +314,7 @@ export default function Training({
   };
 
   const handleReset = () => {
+    setCountdown(null);
     setIsTraining(false);
     setTimer(0);
     trackingRef.current.stage = "up";
@@ -410,8 +452,8 @@ export default function Training({
               className="w-full h-full object-cover brightness-95 contrast-105" 
             />
             
-            {/* Fallback Camera message overlay when training is inactive */}
-            {!isTraining && (
+            {/* Fallback Camera message overlay when training is inactive and not in countdown */}
+            {!isTraining && countdown === null && (
               <div className="absolute inset-0 bg-black/80 z-10 flex flex-col items-center justify-center p-6 text-center space-y-4 transition-all duration-300">
                 <div className="p-4 rounded-full bg-red-500/5 border border-red-500/10 text-red-400">
                   <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse">
@@ -428,6 +470,24 @@ export default function Training({
                     Model AI dan kamera sudah siap dimuat. Klik tombol <b>Mulai Latihan</b> untuk menyalakan pelacakan sendi secara realtime.
                   </p>
                 </div>
+              </div>
+            )}
+
+            {/* Countdown timer overlay */}
+            {countdown !== null && (
+              <div className="absolute inset-0 bg-black/60 z-20 flex flex-col items-center justify-center pointer-events-none animate-[fadeIn_0.2s_ease-out]">
+                <div className="relative flex items-center justify-center">
+                  <div className="absolute w-32 h-32 rounded-full border-4 border-red-500/20 animate-ping"></div>
+                  <div className="absolute w-28 h-28 rounded-full border-2 border-red-500/40 animate-pulse"></div>
+                  <div className="w-24 h-24 rounded-full bg-zinc-950/95 border border-red-500/30 flex items-center justify-center shadow-[0_0_30px_-5px_rgba(239,68,68,0.3)]">
+                    <span key={countdown} className="text-5xl font-black italic text-red-500 font-sport animate-[scaleUp_1s_ease-in-out_infinite] tracking-tighter">
+                      {countdown}
+                    </span>
+                  </div>
+                </div>
+                <span className="text-xs font-mono font-bold uppercase tracking-widest text-red-400 mt-6 bg-zinc-950/80 px-4 py-1.5 rounded-full border border-red-500/20 shadow-md">
+                  Bersiap dalam Posisi...
+                </span>
               </div>
             )}
           </div>
@@ -460,12 +520,22 @@ export default function Training({
           <button
             onClick={handleStartStop}
             className={`py-3.5 rounded-2xl font-black uppercase text-xs italic tracking-wider transition-all duration-300 border cursor-pointer shadow-lg flex items-center justify-center gap-2 ${
-              isTraining 
-                ? 'bg-zinc-950 hover:bg-zinc-900 border-white/10 hover:border-red-500/40 text-red-400 shadow-black/20' 
-                : 'bg-red-600 hover:bg-red-500 border-red-600 text-white shadow-red-950/15'
+              countdown !== null
+                ? 'bg-zinc-950 border-red-500/50 text-red-400 shadow-red-950/20'
+                : isTraining 
+                  ? 'bg-zinc-950 hover:bg-zinc-900 border-white/10 hover:border-red-500/40 text-red-400 shadow-black/20' 
+                  : 'bg-red-600 hover:bg-red-500 border-red-600 text-white shadow-red-950/15'
             }`}
           >
-            {isTraining ? (
+            {countdown !== null ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Batalkan ({countdown}s)
+              </>
+            ) : isTraining ? (
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <rect width="14" height="14" x="5" y="5" rx="1"/>
