@@ -212,12 +212,12 @@ export default function Training({
                   // Connect joints with glowing styling
                   ctx.lineWidth = 4;
                   ctx.strokeStyle = trackingRef.current.stage === "down" 
-                    ? "rgba(16, 185, 129, 0.85)" // Emerald
-                    : "rgba(6, 182, 212, 0.85)";  // Cyan
+                    ? "rgba(239, 68, 68, 0.85)" // Red
+                    : "rgba(244, 63, 94, 0.85)";  // Rose
                   
                   ctx.shadowColor = trackingRef.current.stage === "down" 
-                    ? "rgba(16, 185, 129, 0.8)" 
-                    : "rgba(6, 182, 212, 0.8)";
+                    ? "rgba(239, 68, 68, 0.8)" 
+                    : "rgba(244, 63, 94, 0.8)";
                   ctx.shadowBlur = 10;
 
                   tmPose.drawSkeleton(pose.keypoints, 0.55, ctx);
@@ -225,8 +225,8 @@ export default function Training({
                   // Reset shadows for keypoints to improve performance
                   ctx.shadowBlur = 0;
                   ctx.fillStyle = trackingRef.current.stage === "down"
-                    ? "#10b981"
-                    : "#06b6d4";
+                    ? "#ef4444"
+                    : "#f43f5e";
                   tmPose.drawKeypoints(pose.keypoints, 0.55, ctx);
                 }
               }
@@ -298,7 +298,7 @@ export default function Training({
         {/* Active Exercise Detail Card */}
         <div className="glass-panel rounded-2xl p-5 border-white/5 space-y-4">
           <div>
-            <span className="text-[9px] font-mono font-bold text-emerald-400 uppercase tracking-widest block mb-1">
+            <span className="text-[9px] font-mono font-bold text-red-400 uppercase tracking-widest block mb-1">
               GERAKAN AKTIF
             </span>
             <h2 className="text-2xl font-black italic tracking-tighter text-white uppercase">
@@ -314,7 +314,7 @@ export default function Training({
             <span className="text-[9px] font-mono uppercase text-slate-500 tracking-wider block">Target Otot</span>
             <div className="flex flex-wrap gap-1.5">
               {currentEx.muscleGroup.split(',').map((muscle, idx) => (
-                <span key={idx} className="text-[9px] font-mono uppercase bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded border border-emerald-500/25">
+                <span key={idx} className="text-[9px] font-mono uppercase bg-red-500/10 text-red-400 px-2.5 py-0.5 rounded border border-red-500/25">
                   {muscle.trim()}
                 </span>
               ))}
@@ -340,7 +340,7 @@ export default function Training({
                   onClick={() => setAudioMode(mode)}
                   className={`py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
                     audioMode === mode
-                      ? "bg-emerald-500 text-black shadow-md font-black"
+                      ? "bg-red-600 text-white shadow-md font-black"
                       : "text-slate-400 hover:text-slate-100"
                   }`}
                 >
@@ -353,7 +353,7 @@ export default function Training({
           {/* Instructions Guide Alert */}
           <div className="bg-zinc-950/60 rounded-xl p-3 border border-white/5 text-[11px] text-slate-400 leading-relaxed font-normal">
             <span className="font-bold text-slate-200 block mb-1">💡 Petunjuk Singkat:</span>
-            Tekan tombol <b className="text-emerald-400">Mulai Latihan</b>, atur tubuh Anda pada frame kamera, dan lakukan repetisi secara teratur untuk mulai melacak gerakan Anda.
+            Tekan tombol <b className="text-red-400">Mulai Latihan</b>, atur tubuh Anda pada frame kamera, dan lakukan repetisi secara teratur untuk mulai melacak gerakan Anda.
           </div>
         </div>
       </div>
@@ -367,10 +367,10 @@ export default function Training({
             hasRepJustOccurred 
               ? "rep-flash" 
               : isTraining 
-                ? "border-emerald-500/40 shadow-emerald-950/10" 
-                : "border-emerald-500/20 shadow-black/80"
+                ? "border-red-500/40 shadow-red-950/10" 
+                : "border-red-500/20 shadow-black/80"
           }`}
-          style={{ "--hud-color": isTraining ? "#10b981" : "#06b6d4" } as React.CSSProperties}
+          style={{ "--hud-color": isTraining ? "#ef4444" : "#f43f5e" } as React.CSSProperties}
         >
           {/* Scanline overlay & corners */}
           <div className="scanlines absolute inset-0 z-10 pointer-events-none rounded-2xl"></div>
@@ -383,21 +383,21 @@ export default function Training({
           <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
             <span className={`text-[10px] font-mono font-bold uppercase tracking-widest px-3 py-1 rounded-md border backdrop-blur-md shadow-md ${
               isTraining 
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" 
-                : "bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                ? "bg-red-500/10 text-red-400 border-red-500/30" 
+                : "bg-rose-500/10 text-rose-400 border-rose-500/30"
             }`}>
               {currentStatus}
             </span>
             
             {isTraining && (
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-beacon"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 pulse-beacon"></span>
             )}
           </div>
 
           {/* Current Stage Indicator Badge */}
           <div className="absolute top-4 right-4 z-20">
             <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-3 py-1 rounded-md bg-black/85 text-slate-300 border border-white/10 shadow-md">
-              STAGE: <b className="text-emerald-400 italic font-sport ml-1">{currentStage}</b>
+              STAGE: <b className="text-red-400 italic font-sport ml-1">{currentStage}</b>
             </span>
           </div>
 
@@ -413,7 +413,7 @@ export default function Training({
             {/* Fallback Camera message overlay when training is inactive */}
             {!isTraining && (
               <div className="absolute inset-0 bg-black/80 z-10 flex flex-col items-center justify-center p-6 text-center space-y-4 transition-all duration-300">
-                <div className="p-4 rounded-full bg-emerald-500/5 border border-emerald-500/10 text-emerald-400">
+                <div className="p-4 rounded-full bg-red-500/5 border border-red-500/10 text-red-400">
                   <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse">
                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                     <circle cx="12" cy="13" r="4"/>
@@ -437,7 +437,7 @@ export default function Training({
         <div className="w-full grid grid-cols-3 gap-4 bg-zinc-900/40 border border-white/5 rounded-2xl p-4 text-center divide-x divide-white/5 relative z-10">
           <div>
             <span className="text-[9px] text-slate-500 font-bold font-mono uppercase tracking-wider">Repetisi</span>
-            <p className="text-2xl font-black italic text-emerald-400 mt-1 tabular-nums">
+            <p className="text-2xl font-black italic text-red-400 mt-1 tabular-nums">
               {exerciseCounts[activeKey] || 0}
             </p>
           </div>
@@ -449,7 +449,7 @@ export default function Training({
           </div>
           <div>
             <span className="text-[9px] text-slate-500 font-bold font-mono uppercase tracking-wider">Akurasi Live</span>
-            <p className="text-2xl font-black italic text-cyan-400 mt-1 tabular-nums font-mono-custom">
+            <p className="text-2xl font-black italic text-rose-400 mt-1 tabular-nums font-mono-custom">
               {(highestAccuracy * 100).toFixed(0)}%
             </p>
           </div>
@@ -461,8 +461,8 @@ export default function Training({
             onClick={handleStartStop}
             className={`py-3.5 rounded-2xl font-black uppercase text-xs italic tracking-wider transition-all duration-300 border cursor-pointer shadow-lg flex items-center justify-center gap-2 ${
               isTraining 
-                ? 'bg-red-500 hover:bg-red-400 border-red-500 text-white shadow-red-950/20' 
-                : 'bg-emerald-500 hover:bg-emerald-400 border-emerald-500 text-black shadow-emerald-950/15'
+                ? 'bg-zinc-950 hover:bg-zinc-900 border-white/10 hover:border-red-500/40 text-red-400 shadow-black/20' 
+                : 'bg-red-600 hover:bg-red-500 border-red-600 text-white shadow-red-950/15'
             }`}
           >
             {isTraining ? (
@@ -500,17 +500,17 @@ export default function Training({
         
         {/* Live Giant Repetition Display */}
         <div className="glass-panel rounded-2xl p-6 border-white/5 text-center flex flex-col items-center justify-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500 shadow-sm"></div>
+          <div className="absolute top-0 left-0 w-full h-1 bg-red-500 shadow-sm"></div>
           
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 font-mono">
             REPETISI TERDETEKSI
           </span>
           
-          <span className="text-7xl font-black italic tracking-tighter leading-none my-4 tabular-nums text-white block glow-emerald animate-[repIncrease_0.3s_ease-out]">
+          <span className="text-7xl font-black italic tracking-tighter leading-none my-4 tabular-nums text-white block glow-red animate-[repIncrease_0.3s_ease-out]">
             {exerciseCounts[activeKey] || 0}
           </span>
           
-          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/90 px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/25">
+          <span className="text-[10px] font-black uppercase tracking-widest text-red-400/90 px-3 py-1 bg-red-500/10 rounded-full border border-red-500/25">
             {currentEx.name}
           </span>
         </div>
@@ -518,7 +518,7 @@ export default function Training({
         {/* AI Classification Probability Telemetry */}
         <div className="glass-panel rounded-2xl p-5 border-white/5 space-y-4">
           <div className="border-b border-white/5 pb-2.5 flex justify-between items-center">
-            <h3 className="text-xs font-black text-emerald-400 uppercase tracking-widest font-mono">
+            <h3 className="text-xs font-black text-red-400 uppercase tracking-widest font-mono">
               TELEMETRI MODEL AI
             </h3>
             <span className="text-[9px] font-mono text-slate-500">LIVE FEED</span>
@@ -538,7 +538,7 @@ export default function Training({
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight block max-w-[80%] truncate">
                         {bar.label}
                       </span>
-                      <span className="text-[11px] font-mono font-bold text-emerald-400">
+                      <span className="text-[11px] font-mono font-bold text-red-400">
                         {percentage}%
                       </span>
                     </div>
@@ -574,7 +574,7 @@ export default function Training({
                     <span className="text-[9px] text-slate-500 font-mono block mt-0.5">{log.time}</span>
                   </div>
                   
-                  <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded">
+                  <span className="text-[9px] font-mono font-bold text-red-400 bg-red-500/10 border border-red-500/25 px-2 py-0.5 rounded">
                     COUNTED
                   </span>
                 </div>

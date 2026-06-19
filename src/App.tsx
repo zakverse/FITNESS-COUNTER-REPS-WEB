@@ -19,8 +19,8 @@ function NavigationHeader({
     <header className="glass-panel border-b border-white/5 py-4 px-6 md:px-8 flex justify-between items-center shadow-lg sticky top-0 z-50">
       <div className="flex items-center gap-3">
         <Link to="/" onClick={() => setIsTraining(false)} className="flex items-center">
-          <span className="text-3xl font-black italic tracking-tighter text-emerald-400">FIT</span>
-          <span className="text-3xl font-black italic tracking-tighter text-white bg-emerald-500/20 px-2 py-0.5 rounded-md ml-1 border border-emerald-500/30">AI</span>
+          <span className="text-3xl font-black italic tracking-tighter text-red-500 bg-gradient-to-r from-red-500 to-rose-500 bg-clip-text text-transparent">FIT</span>
+          <span className="text-3xl font-black italic tracking-tighter text-white bg-red-500/20 px-2 py-0.5 rounded-md ml-1 border border-red-500/30">AI</span>
         </Link>
         <span className="hidden sm:inline-block w-[1px] h-6 bg-white/10 mx-2"></span>
         <span className="hidden sm:inline-block text-[11px] font-mono tracking-widest text-slate-400 uppercase">
@@ -34,7 +34,7 @@ function NavigationHeader({
             setIsTraining(false);
             navigate("/");
           }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 border border-white/10 hover:border-emerald-400/50 hover:bg-zinc-800 text-xs font-bold uppercase tracking-wider transition-all duration-200 text-slate-300 cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900 border border-white/10 hover:border-red-500/50 hover:bg-zinc-800 text-xs font-bold uppercase tracking-wider transition-all duration-200 text-slate-300 cursor-pointer"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -43,8 +43,8 @@ function NavigationHeader({
         </button>
       ) : (
         <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg text-emerald-400 font-bold uppercase tracking-widest">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 pulse-beacon"></span>
+          <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg text-red-400 font-bold uppercase tracking-widest">
+            <span className="w-2 h-2 rounded-full bg-red-500 pulse-beacon"></span>
             Live Tracking Active
           </div>
         </div>
@@ -99,8 +99,8 @@ function MainAppContent() {
   return (
     <div className="min-h-screen text-slate-100 flex flex-col font-sans select-none antialiased relative">
       {/* Background radial overlays */}
-      <div className="bg-glowing-blob blob-cyan"></div>
-      <div className="bg-glowing-blob blob-emerald"></div>
+      <div className="bg-glowing-blob blob-rose"></div>
+      <div className="bg-glowing-blob blob-red"></div>
 
       {/* TOP HEADER STATUS BAR */}
       <NavigationHeader setIsTraining={setIsTraining} />

@@ -6,18 +6,17 @@ export const EXERCISES_DATA: Record<string, Exercise> = {
     sub: "Full Body",
     desc: "Latihan kardio intensif untuk melatih kelincahan, kekuatan kaki, dan kebugaran jantung.",
     muscleGroup: "Full Body & Cardio",
-    modelUrl: "https://teachablemachine.withgoogle.com/models/jZHgQNIHN/",
+    modelUrl: "https://teachablemachine.withgoogle.com/models/3CAetVQU_/",
     checkRep: (prediction: PredictionItem[], stage: string) => {
-      const probLompat = prediction[0]?.probability || 0;
-      const probBerdiri = prediction[1]?.probability || 0;
-      const probTanganAtas = prediction[2]?.probability || 0;
+      const probLompat = prediction.find(p => p.className === "JumpingJackLompat")?.probability || 0;
+      const probBerdiri = prediction.find(p => p.className === "JumpingJackBerdiri")?.probability || 0;
 
       let nextStage = stage;
       let status = "READY";
       let isRep = false;
 
-      // Logic: Lompat atau tangan atas memicu stage 'down'
-      if ((probLompat > 0.90 || probTanganAtas > 0.90) && stage !== "down") {
+      // Logic: Lompat memicu stage 'down'
+      if (probLompat > 0.90 && stage !== "down") {
         nextStage = "down";
         status = "JUMP!";
       }
@@ -32,9 +31,8 @@ export const EXERCISES_DATA: Record<string, Exercise> = {
         status,
         isRep,
         bars: [
-          { label: "Jumping-Jack-lompat", value: probLompat, color: "bg-cyan-500 shadow-cyan-500/20" },
-          { label: "Jumping-Jack-Berdiri", value: probBerdiri, color: "bg-emerald-500 shadow-emerald-500/20" },
-          { label: "Jumping-jack-berdiri-tangan-atas", value: probTanganAtas, color: "bg-teal-500 shadow-teal-500/20" }
+          { label: "JumpingJackLompat", value: probLompat, color: "bg-rose-500 shadow-rose-500/20" },
+          { label: "JumpingJackBerdiri", value: probBerdiri, color: "bg-red-600 shadow-red-600/20" }
         ]
       };
     }
@@ -44,28 +42,23 @@ export const EXERCISES_DATA: Record<string, Exercise> = {
     sub: "Chest & Triceps",
     desc: "Melatih kekuatan otot dada, bahu, lengan, serta kestabilan otot inti (core).",
     muscleGroup: "Chest, Triceps, Shoulders",
-    modelUrl: "https://teachablemachine.withgoogle.com/models/ho-trLhwI/",
+    modelUrl: "https://teachablemachine.withgoogle.com/models/on812O7_M/",
     checkRep: (prediction: PredictionItem[], stage: string) => {
-      const probUp = prediction[0]?.probability || 0;
-      const probDown = prediction[1]?.probability || 0;
-      const probNetral = prediction[2]?.probability || 0;
+      const probUp = prediction.find(p => p.className === "PushUp-Atas")?.probability || 0;
+      const probDown = prediction.find(p => p.className === "PushUp-Bawah")?.probability || 0;
 
       let nextStage = stage;
       let status = stage === "up" ? "PLANK POSITION" : "HOLD POSITION";
       let isRep = false;
 
-      if (probNetral < 0.5) {
-        if (probDown > 0.95 && stage !== "down") {
-          nextStage = "down";
-          status = "PUSH DOWN!";
-        }
-        if (probUp > 0.95 && stage === "down") {
-          nextStage = "up";
-          status = "PERFECT PUSH!";
-          isRep = true;
-        }
-      } else {
-        status = "NETRAL / RESTING";
+      if (probDown > 0.95 && stage !== "down") {
+        nextStage = "down";
+        status = "PUSH DOWN!";
+      }
+      if (probUp > 0.95 && stage === "down") {
+        nextStage = "up";
+        status = "PERFECT PUSH!";
+        isRep = true;
       }
 
       return {
@@ -73,9 +66,8 @@ export const EXERCISES_DATA: Record<string, Exercise> = {
         status,
         isRep,
         bars: [
-          { label: "Push Up - Atas", value: probUp, color: "bg-cyan-500 shadow-cyan-500/20" },
-          { label: "Push Up - Bawah", value: probDown, color: "bg-emerald-500 shadow-emerald-500/20" },
-          { label: "Netral", value: probNetral, color: "bg-slate-600 shadow-slate-600/20" }
+          { label: "PushUp-Atas", value: probUp, color: "bg-rose-500 shadow-rose-500/20" },
+          { label: "PushUp-Bawah", value: probDown, color: "bg-red-600 shadow-red-600/20" }
         ]
       };
     }
@@ -85,28 +77,23 @@ export const EXERCISES_DATA: Record<string, Exercise> = {
     sub: "Core & Abs",
     desc: "Menargetkan kekuatan otot perut (abs), pinggul, dan stabilitas punggung bawah.",
     muscleGroup: "Core & Abdominals",
-    modelUrl: "https://teachablemachine.withgoogle.com/models/uk8veRyZx/",
+    modelUrl: "https://teachablemachine.withgoogle.com/models/XqmMR6npf/",
     checkRep: (prediction: PredictionItem[], stage: string) => {
-      const probDown = prediction[0]?.probability || 0; // Rebahan
-      const probUp = prediction[1]?.probability || 0;   // Duduk
-      const probNetral = prediction[2]?.probability || 0;
+      const probDown = prediction.find(p => p.className === "SitDown")?.probability || 0;
+      const probUp = prediction.find(p => p.className === "SitUp")?.probability || 0;
 
       let nextStage = stage;
       let status = stage === "up" ? "START FORM" : "MID CRUNCH";
       let isRep = false;
 
-      if (probNetral < 0.5) {
-        if (probDown > 0.95 && stage !== "down") {
-          nextStage = "down";
-          status = "LAYING DOWN";
-        }
-        if (probUp > 0.95 && stage === "down") {
-          nextStage = "up";
-          status = "REP SUCCESS!";
-          isRep = true;
-        }
-      } else {
-        status = "NETRAL / RESTING";
+      if (probDown > 0.95 && stage !== "down") {
+        nextStage = "down";
+        status = "LAYING DOWN";
+      }
+      if (probUp > 0.95 && stage === "down") {
+        nextStage = "up";
+        status = "REP SUCCESS!";
+        isRep = true;
       }
 
       return {
@@ -114,9 +101,8 @@ export const EXERCISES_DATA: Record<string, Exercise> = {
         status,
         isRep,
         bars: [
-          { label: "Sit Up Rebahan", value: probDown, color: "bg-cyan-500 shadow-cyan-500/20" },
-          { label: "Sit Up Duduk", value: probUp, color: "bg-emerald-500 shadow-emerald-500/20" },
-          { label: "Netral", value: probNetral, color: "bg-slate-600 shadow-slate-600/20" }
+          { label: "SitUp", value: probUp, color: "bg-rose-500 shadow-rose-500/20" },
+          { label: "SitDown", value: probDown, color: "bg-red-600 shadow-red-600/20" }
         ]
       };
     }
@@ -150,8 +136,8 @@ export const EXERCISES_DATA: Record<string, Exercise> = {
         status,
         isRep,
         bars: [
-          { label: "Squat - Bawah", value: probDown, color: "bg-cyan-500 shadow-cyan-500/20" },
-          { label: "Squat - Atas", value: probUp, color: "bg-emerald-500 shadow-emerald-500/20" }
+          { label: "Squat - Bawah", value: probDown, color: "bg-rose-500 shadow-rose-500/20" },
+          { label: "Squat - Atas", value: probUp, color: "bg-red-600 shadow-red-600/20" }
         ]
       };
     }
@@ -161,10 +147,10 @@ export const EXERCISES_DATA: Record<string, Exercise> = {
     sub: "Legs & Balance",
     desc: "Latihan unilateral untuk meningkatkan stabilitas kaki, kekuatan paha depan, paha belakang, dan glutes.",
     muscleGroup: "Quadriceps, Glutes, Balance",
-    modelUrl: "https://teachablemachine.withgoogle.com/models/lQEGyOvNo/",
+    modelUrl: "https://teachablemachine.withgoogle.com/models/CPyQ8UUR_/",
     checkRep: (prediction: PredictionItem[], stage: string) => {
-      const probDown = prediction[0]?.probability || 0; // Lunges
-      const probUp = prediction[1]?.probability || 0;   // Berdiri
+      const probDown = prediction.find(p => p.className === "Lunges")?.probability || 0;
+      const probUp = prediction.find(p => p.className === "Berdiri")?.probability || 0;
 
       let nextStage = stage;
       let status = "READY";
@@ -185,8 +171,8 @@ export const EXERCISES_DATA: Record<string, Exercise> = {
         status,
         isRep,
         bars: [
-          { label: "Lunges", value: probDown, color: "bg-cyan-500 shadow-cyan-500/20" },
-          { label: "Berdiri", value: probUp, color: "bg-emerald-500 shadow-emerald-500/20" }
+          { label: "Lunges", value: probDown, color: "bg-rose-500 shadow-rose-500/20" },
+          { label: "Berdiri", value: probUp, color: "bg-red-600 shadow-red-600/20" }
         ]
       };
     }
