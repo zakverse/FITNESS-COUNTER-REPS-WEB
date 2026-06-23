@@ -39,6 +39,7 @@ export default function Training({
   const [hasRepJustOccurred, setHasRepJustOccurred] = useState(false);
   const [currentStage, setCurrentStage] = useState("up");
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
 
   // Ref tracking state sync for high frequency animation frame callbacks
   const trackingRef = useRef({
@@ -122,8 +123,8 @@ export default function Training({
 
         // Start webcam setup
         const size = 640;
-        webcam = new tmPose.Webcam(size, 480, true); 
-        await webcam.setup(); 
+        webcam = new tmPose.Webcam(size, 480, facingMode === "user"); 
+        await webcam.setup({ facingMode: facingMode }); 
         await webcam.play();
         
         if (!isActive) {
@@ -260,7 +261,7 @@ export default function Training({
       cancelAnimationFrame(animationId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeKey]);
+  }, [activeKey, facingMode]);
 
   // Countdown effect before starting active training
   useEffect(() => {
@@ -369,6 +370,35 @@ export default function Training({
           <h3 className="text-xs uppercase tracking-widest text-slate-400 font-bold font-mono">
             PENGATURAN CONSOLE
           </h3>
+
+          {/* Camera Toggle */}
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase font-mono text-slate-400 tracking-wider block">
+              Kamera (Depan/Belakang)
+            </label>
+            <div className="grid grid-cols-2 gap-1 bg-zinc-950 p-1 rounded-xl border border-white/5">
+              <button
+                onClick={() => setFacingMode("user")}
+                className={`py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+                  facingMode === "user"
+                    ? "bg-red-600 text-white shadow-md font-black"
+                    : "text-slate-400 hover:text-slate-100"
+                }`}
+              >
+                Depan
+              </button>
+              <button
+                onClick={() => setFacingMode("environment")}
+                className={`py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+                  facingMode === "environment"
+                    ? "bg-red-600 text-white shadow-md font-black"
+                    : "text-slate-400 hover:text-slate-100"
+                }`}
+              >
+                Belakang
+              </button>
+            </div>
+          </div>
 
           {/* Sound Mode Toggle */}
           <div className="space-y-2">
